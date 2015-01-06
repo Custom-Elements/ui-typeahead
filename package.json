@@ -6,7 +6,7 @@
     "polymer": "git://github.com/custom-elements/polymer#master",
     "polymer-build": "",
     "ui-fonts": "git://github.com/custom-elements/ui-fonts#master",
-    "ui-input": "git://github.com/Custom-Elements/ui-input#master",
+    "ui-input": "git://github.com/Custom-Elements/ui-input#de_lodash",
     "ui-styles": "git://github.com/custom-elements/ui-styles"
   },
   "license": "ISC",

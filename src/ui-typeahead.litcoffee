@@ -8,7 +8,6 @@ Typeahead control that handles the common typeahead functionality by the followi
   in the `ui-typeahead-items`, and `change` which fires when the selected item changes
 
 
-    _ = require('lodash-node')
     lastEmittedValue = null
     keys =
       up: 38
@@ -113,8 +112,11 @@ and either settting the value or buffering it in an array
 
       inputChanged: ->
         @async ->
-          items = @querySelectorAll('ui-typeahead-item')
-          focusIndex = _.findIndex items, (i) -> i.hasAttribute 'focused'
+          items = [].slice.call(@querySelectorAll('ui-typeahead-item'))
+
+          focused = @querySelectorAll('ui-typeahead-item[focused]')
+          focusIndex = items.indexOf focused[0]
+          
           items[focusIndex]?.removeAttribute 'focused'
           items[0]?.setAttribute 'focused', ''
         @open()
@@ -141,8 +143,10 @@ function, which debounces and then emits `change` (assuming that after the debou
 is in fact different)
 
       keyup: (evt) ->
-        items = @querySelectorAll('ui-typeahead-item')
-        focusIndex = _.findIndex items, (i) -> i.hasAttribute 'focused'
+        items = [].slice.call(@querySelectorAll('ui-typeahead-item'))
+
+        focused = @querySelectorAll('ui-typeahead-item[focused]')
+        focusIndex = items.indexOf focused[0]
 
         if evt.which is keys.down
           items[focusIndex]?.removeAttribute 'focused'
@@ -186,8 +190,10 @@ Fired by some elements, see if we can remove the detail data.
 
       remove: (evt, detail) ->
         if @multiselect?
-          _.remove @value, detail
-          @fire 'itemremoved', detail
+          index = @value.indexOf(detail)
+          if index > -1
+            @value.splice(index, 1)
+            @fire 'itemremoved', detail
 
 ##Polymer Lifecycle
 
@@ -199,12 +205,13 @@ ui-typeahead)
 
       attached: ->
         @debounce ||= 300
-        @debouncedKeyPress = _.debounce =>
-          if @$.input.value isnt lastEmittedValue
-            lastEmittedValue = @$.input.value
-            @fire 'inputchange', { value: @$.input.value }
-            @inputChanged()
-        , @debounce
+        @debouncedKeyPress = () ->
+          @job 'attachedTimer', =>
+            if @$.input.value isnt lastEmittedValue
+              lastEmittedValue = @$.input.value
+              @fire 'inputchange', { value: @$.input.value }
+              @inputChanged()
+          , @debounce
 
         window.addEventListener 'click', (evt) => @documentClick(evt)
 

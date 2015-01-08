@@ -9,6 +9,7 @@ Typeahead control that handles the common typeahead functionality by the followi
 
 
     lastEmittedValue = null
+    backspaceBufferCount = 0
     keys =
       up: 38
       down: 40
@@ -62,9 +63,17 @@ With `multiselect`, this fires when a new item is removed, with the item as deta
 
 ##Methods
 
+###
+
+      clearValue: ->
+        backspaceBufferCount = 0
+        @$.input.value = null
+        lastEmittedValue = null
+
 ### open and close
 
       focus: ->
+        @clearValue()
         @$.input.focus()
 
       open: ->
@@ -72,7 +81,7 @@ With `multiselect`, this fires when a new item is removed, with the item as deta
 
       close: ->
         @$.results.classList.remove 'open'
-        @$.input.value = null
+        @clearValue()
 
 ### selectItem and clear
 Selecting an item means we pull in the data from the rendered `ui-typeahead-item`
@@ -87,10 +96,10 @@ and either settting the value or buffering it in an array
           @fire 'itemadded', selectedValue
         else
           @value = selectedValue
-        @$.input.value = null
+        @clearValue()
 
       clear: () ->
-        @$.input.value = null
+        @clearValue()
         if @multiselect?
           if not Array.isArray(@value)
             @value = []
@@ -158,14 +167,15 @@ is in fact different)
           items[focusIndex-1]?.setAttribute 'focused', ''
 
         else if evt.which in [ keys.enter, keys.tab ]
-          @selectItem items[focusIndex]
+          @selectItem(items[focusIndex]) if @$.input.value
 
         else if evt.which is keys.escape
           @close()
           @fire 'inputchange', { value: null }
         else if evt.which is keys.backspace
-          if not @$.input.value
-            @clear()
+          @clear() if not @$.input.value and backspaceBufferCount == 1
+          backspaceBufferCount += 1
+
         else
           @debouncedKeyPress(evt)
 
@@ -195,6 +205,14 @@ Fired by some elements, see if we can remove the detail data.
             @value.splice(index, 1)
             @fire 'itemremoved', detail
 
+      debouncedKeyPress: ->
+        @job 'keys', ->
+          if @$.input.value isnt lastEmittedValue
+            lastEmittedValue = @$.input.value
+            @fire 'inputchange', { value: @$.input.value }
+            @inputChanged()
+        , @debounce
+
 ##Polymer Lifecycle
 
 ### attached
@@ -205,14 +223,6 @@ ui-typeahead)
 
       attached: ->
         @debounce ||= 300
-        @debouncedKeyPress = () ->
-          @job 'attachedTimer', =>
-            if @$.input.value isnt lastEmittedValue
-              lastEmittedValue = @$.input.value
-              @fire 'inputchange', { value: @$.input.value }
-              @inputChanged()
-          , @debounce
-
         window.addEventListener 'click', (evt) => @documentClick(evt)
 
 ### detached

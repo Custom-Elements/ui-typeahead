@@ -91,6 +91,8 @@ Selecting an item means we pull in the data from the rendered `ui-typeahead-item
 and either settting the value or buffering it in an array
 
       selectItem: (item) ->
+        #allow items that arent selectable
+        return if item.hasAttribute "label"
         selectedValue = (@valueFilter or (x) -> x)(item?.templateInstance?.model)
         if @multiselect?
           if not Array.isArray(@value)
@@ -164,6 +166,9 @@ is in fact different)
           items[focusIndex]?.removeAttribute 'focused'
           items[ (focusIndex+1)%items.length ]?.setAttribute 'focused', ''
 
+          if items[focusIndex]? && items[focusIndex].offsetTop + items[focusIndex].offsetHeight >= @$.results.offsetHeight
+            @$.results.scrollTop += items[focusIndex].offsetHeight
+
         else if evt.which is keys.up
           items[focusIndex]?.removeAttribute 'focused'
           focusIndex = items.length if focusIndex <= 0
@@ -188,6 +193,7 @@ is in fact different)
           backspaceBufferCount += 1
 
         else if evt.which not in [keys.down,keys.up]
+          backspaceBufferCount = 0
           @debouncedKeyPress(evt)
 
 Size the results panel so that it doesn't fall off the page, instead -- make it
@@ -214,7 +220,7 @@ Fired by some elements, see if we can remove the detail data.
           index = @value.indexOf(detail)
           if index > -1
             @value.splice(index, 1)
-            @fire 'itemremoved', detail
+          @fire 'itemremoved', detail
 
       debouncedKeyPress: ->
         @job 'keys', ->

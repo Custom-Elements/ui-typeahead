@@ -5,11 +5,12 @@
 <polymer-element name="ui-typeahead" attributes="placeholder value multiselect valueFilter"
   on-focus="{{focus}}"
   on-keyup="{{keyup}}"
+  on-keydown="{{keydown}}"
 >
 <template>
   <link rel="stylesheet" type="text/css" href="./ui-typeahead.less">
 
-  <ui-input id="input" placeholder="{{placeholder}}" value="{{text}}" on-click="{{focus}}" on-remove="{{remove}}">
+  <ui-input id="input" placeholder="{{placeholder}}" value="{{text}}" on-click="{{focus}}" on-remove="{{remove}}" on-blur="{{blur}}">
     <content select="icon"></content>
     <content select="value"></content>
   </ui-input>

@@ -76,6 +76,9 @@ With `multiselect`, this fires when a new item is removed, with the item as deta
         @clearValue()
         @$.input.focus()
 
+      blur: ->
+        @close()
+
       open: ->
         @$.results.classList.add 'open'
 
@@ -151,9 +154,9 @@ On keyup, the typeahead checks for control keypresses and otherwise fires the `d
 function, which debounces and then emits `change` (assuming that after the debounce the value
 is in fact different)
 
-      keyup: (evt) ->
+      keydown: (evt) ->
+        return unless evt.which in [keys.down,keys.up]
         items = [].slice.call(@querySelectorAll('ui-typeahead-item'))
-
         focused = @querySelectorAll('ui-typeahead-item[focused]')
         focusIndex = items.indexOf focused[0]
 
@@ -166,7 +169,15 @@ is in fact different)
           focusIndex = items.length if focusIndex <= 0
           items[focusIndex-1]?.setAttribute 'focused', ''
 
-        else if evt.which in [ keys.enter, keys.tab ]
+        evt.preventDefault()
+
+      keyup: (evt) ->
+        items = [].slice.call(@querySelectorAll('ui-typeahead-item'))
+
+        focused = @querySelectorAll('ui-typeahead-item[focused]')
+        focusIndex = items.indexOf focused[0]
+        
+        if evt.which in [ keys.enter, keys.tab ]
           @selectItem(items[focusIndex]) if @$.input.value
 
         else if evt.which is keys.escape
@@ -176,7 +187,7 @@ is in fact different)
           @clear() if not @$.input.value and backspaceBufferCount == 1
           backspaceBufferCount += 1
 
-        else
+        else if evt.which not in [keys.down,keys.up]
           @debouncedKeyPress(evt)
 
 Size the results panel so that it doesn't fall off the page, instead -- make it

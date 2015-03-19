@@ -50,6 +50,9 @@ in the dropdown list.
 
 ###sticky
 Allow the menu section to remain open
+Can have value for different behaviors: 
+  "always" "notempty"
+If none are specified then "notempty"
 
 ##Events
 
@@ -79,7 +82,12 @@ With `multiselect`, this fires when a new item is removed, with the item as deta
       open: ->
         @$.results.setAttribute 'open', ''
 
-      close: ->
+      isSticky: ->
+        return false unless @.hasAttribute 'sticky'
+        @sticky == "always" || (@sticky != "always" && @$.input.value) # the default case is not always with a value; backwards compatibility
+
+      close: (useSticky=true) ->
+        return if useSticky && @isSticky()
         if @$.results.hasAttribute 'open'
           @$.results.removeAttribute 'open'
           @clearValue()
@@ -150,11 +158,8 @@ and either settting the value or buffering it in an array
 Since we stop click propagation from within our element, anything
 bubbling up to the document handler is outside us and should unfocus the element
 
-      documentClick: (evt) ->
-        if @.hasAttribute 'sticky'
-          return
-        else
-          @close()
+      documentClick: (evt) -> 
+        @close(false)
 
 ### click
 Clicks on a ui-typeahead-item mark it as selected, all clicks within ui-typeahead
@@ -174,7 +179,7 @@ On keyup, the typeahead checks for control keypresses.
         if evt.which in [ keys.enter, keys.tab ]
           @selectItem focusedItem
         else if evt.which is keys.escape
-          @close()
+          @close(false)
         else if evt.which is keys.backspace
           @clear() if not @$.input.value and backspaceBufferCount > 0
           backspaceBufferCount += 1

@@ -92,7 +92,7 @@ and either settting the value or buffering it in an array
         return if !item or item.nodeName is "UI-TYPEAHEAD-SECTION"
 
         selectedValue = (@valueFilter or (x) -> x)(item?.templateInstance?.model)
-        if @multiselect?
+        if @isMultiSelect
           if not Array.isArray(@value)
             @value = []
           @value.push selectedValue
@@ -105,7 +105,7 @@ and either settting the value or buffering it in an array
 
       clear: () ->
         @clearValue()
-        if @multiselect?
+        if @isMultiSelect
           if not Array.isArray(@value)
             @value = []
           if @value.length
@@ -132,12 +132,12 @@ and either settting the value or buffering it in an array
 
       focusIn: ->
         @setAttribute 'focused', ''
-        if not @hasAttribute 'multiselect'
+        if not @isMultiSelect
           @$.input.hideValue()
 
       focusOut: ->
         @removeAttribute 'focused'
-        if not @hasAttribute 'multiselect'
+        if not @isMultiSelect
           @$.input.showValue()
 
       inputChanged: (evt) ->
@@ -221,7 +221,7 @@ Also make sure items scroll into view for long lists
 Fired by some elements, see if we can remove the detail data.
 
       remove: (evt, detail) ->
-        if @multiselect?
+        if @isMultiSelect
           idx = @value.indexOf detail
           if idx > -1
             @value.splice idx, 1
@@ -237,6 +237,7 @@ ui-typeahead)
 
       attached: ->
         window.addEventListener 'click', (evt) => @documentClick(evt)
+        @isMultiSelect = @multiselect? && @multiselect != "false"
 
 ### detached
 
